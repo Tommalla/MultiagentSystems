@@ -3,7 +3,6 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
-import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
@@ -15,7 +14,10 @@ public class BlottoAgent extends Agent {
 
     @Override
     protected void setup() {
-        // register agent
+        // Get the number of units.
+        units = Integer.parseInt(this.getArguments()[0].toString());
+
+        // Register agent.
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd  = new ServiceDescription();
@@ -36,7 +38,14 @@ public class BlottoAgent extends Agent {
         Calendar c = Calendar.getInstance();
         c.setTime(new Date()); // Now use today date.
 
-        c.add(Calendar.MINUTE, 1); // Adds 1 minute
+        c.add(Calendar.MINUTE, 1); // Adds 1 minute.
         this.addBehaviour(new WaitBehaviour(this, Date.from(c.toInstant())));
+    }
+
+    @Override
+    protected void takeDown() {
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException e) {}
     }
 }
