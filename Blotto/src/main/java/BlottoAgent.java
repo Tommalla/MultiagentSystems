@@ -3,6 +3,9 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,5 +32,11 @@ public class BlottoAgent extends Agent {
             fe.printStackTrace();
         }
 
+        // TODO how to handle messages before 60 secs?
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date()); // Now use today date.
+
+        c.add(Calendar.MINUTE, 1); // Adds 1 minute
+        this.addBehaviour(new WaitBehaviour(this, Date.from(c.toInstant())));
     }
 }
