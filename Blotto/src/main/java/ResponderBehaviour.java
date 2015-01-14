@@ -13,8 +13,8 @@ import jade.proto.ContractNetResponder;
 
 public class ResponderBehaviour extends ContractNetResponder {
 
-    public ResponderBehaviour(Agent a, MessageTemplate mt, DataStore store) {
-        super(a, mt, store);
+    public ResponderBehaviour(Agent a, MessageTemplate mt) {
+        super(a, mt);
     }
 
     @Override

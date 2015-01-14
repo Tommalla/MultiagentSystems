@@ -1,80 +1,62 @@
 import jade.content.ContentElementList;
 import jade.content.lang.Codec;
 import jade.content.onto.OntologyException;
+import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.DataStore;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.proto.ContractNetInitiator;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
 
 
 public class InitiatorBehaviour extends ContractNetInitiator {
-    DFAgentDescription[] agents = null;
 
-    public InitiatorBehaviour(Agent a, ACLMessage cfp, DataStore store) {
-        super(a, cfp, store);
-    }
+    private static final long REPLY_TIMEOUT = 70000L;
 
-    @Override
-    public void onStart() {
-        Logger.getGlobal().info("InitiatorBehaviour: Getting agents from DF");
-
-        try {
-            // Obtaining known agents from DF.
-            DFAgentDescription dfd = new DFAgentDescription();
-            ServiceDescription sd  = new ServiceDescription();
-            sd.setType("Blotto");
-            dfd.addServices(sd);
-
-            agents = DFService.search(this.myAgent, dfd);
-
-            System.out.println(agents.length + " results" );
-
-        } catch (FIPAException ex) {
-            //FIXME
-        }
-        // TODO send CFPs
-        // Pair up
+    public InitiatorBehaviour(Agent a, ACLMessage cfp) {
+        super(a, cfp);
     }
 
     @Override
     protected Vector prepareCfps(ACLMessage cfp) {
         Vector<ACLMessage> msgs = new Vector<ACLMessage>();
-        System.out.println(cfp);
-        for (int i = 0; i < agents.length; ++i) {
-            ACLMessage newMsg = new ACLMessage(ACLMessage.CFP);
-            newMsg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-            newMsg.setLanguage(FIPANames.ContentLanguage.FIPA_SL);
-            newMsg.setOntology(BlottoOntology.ONTOLOGY_NAME);
-            newMsg.addReceiver(agents[i].getName());
-            newMsg.addReplyTo(myAgent.getAID());
-            // FIXME add replyByDate
+        List<AID> agentsList = ((BlottoAgent)myAgent).getAgentsFromDF();
+        for (AID agentAID : agentsList) {
+            if (agentAID != myAgent.getAID()) {
+                ACLMessage newMsg = (ACLMessage)cfp.clone();
+                newMsg.addReceiver(agentAID);
+                newMsg.addReplyTo(myAgent.getAID());
+                newMsg.setReplyByDate(new Date(
+                        Calendar.getInstance().getTime().getTime() + REPLY_TIMEOUT));
 
-            // Try to give all units.
-            ContentElementList cel = new ContentElementList();
-            cel.add(new CommittedUnits());
-             try
-            {
-                myAgent.getContentManager().fillContent(newMsg, cel);
-            }
-            catch (Codec.CodecException ex)
-            {
-                // ignore
-            }
-            catch (OntologyException ex)
-            {
-                // ignore
-            }
+                // Try to give all units.
+                ContentElementList cel = new ContentElementList();
+                cel.add(new CommittedUnits());
+                 try
+                {
+                    myAgent.getContentManager().fillContent(newMsg, cel);
+                }
+                catch (Codec.CodecException ex)
+                {
+                    // ignore
+                }
+                catch (OntologyException ex)
+                {
+                    // ignore
+                }
 
-            msgs.add(newMsg);
+                msgs.add(newMsg);
+            }
         }
+        System.out.println(getDataStore());
         return msgs;
     }
 
+    @Override
+    protected void handlePropose(ACLMessage propose, Vector acceptances) {
+        System.out.println("handlePropose");
+    }
 }
