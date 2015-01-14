@@ -1,3 +1,4 @@
+import jade.content.lang.sl.SLCodec;
 import jade.core.Agent;
 import jade.core.behaviours.DataStore;
 import jade.domain.DFService;
@@ -39,6 +40,10 @@ public class BlottoAgent extends Agent {
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
+
+        // Setup the recognized langugages and ontologies
+        getContentManager().registerLanguage(new SLCodec());
+        getContentManager().registerOntology(BlottoOntology.getInstance());
 
         // Add the waiting behaviour.
         Calendar c = Calendar.getInstance();

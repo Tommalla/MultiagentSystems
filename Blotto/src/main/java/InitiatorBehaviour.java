@@ -1,3 +1,6 @@
+import jade.content.ContentElementList;
+import jade.content.lang.Codec;
+import jade.content.onto.OntologyException;
 import jade.core.Agent;
 import jade.core.behaviours.DataStore;
 import jade.domain.DFService;
@@ -47,8 +50,28 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         for (int i = 0; i < agents.length; ++i) {
             ACLMessage newMsg = new ACLMessage(ACLMessage.CFP);
             newMsg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+            newMsg.setLanguage(FIPANames.ContentLanguage.FIPA_SL);
+            newMsg.setOntology(BlottoOntology.ONTOLOGY_NAME);
             newMsg.addReceiver(agents[i].getName());
             newMsg.addReplyTo(myAgent.getAID());
+            // FIXME add replyByDate
+
+            // Try to give all units.
+            ContentElementList cel = new ContentElementList();
+            cel.add(new CommittedUnits());
+             try
+            {
+                myAgent.getContentManager().fillContent(newMsg, cel);
+            }
+            catch (Codec.CodecException ex)
+            {
+                // ignore
+            }
+            catch (OntologyException ex)
+            {
+                // ignore
+            }
+
             msgs.add(newMsg);
         }
         return msgs;
