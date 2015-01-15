@@ -76,6 +76,13 @@ public class ResponderBehaviour extends ContractNetResponder {
         return response;
     }
 
+    @Override
+    protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
+        ((BlottoAgent)myAgent).units += givenUnits;
+        givenUnits = 0;
+    }
+
+
     private AID getArbitrator() throws FIPAException {
         DFAgentDescription temp = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();

@@ -4,7 +4,6 @@ import jade.content.onto.basic.Action;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.DataStore;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
 import jade.util.leap.ArrayList;
@@ -15,28 +14,31 @@ import java.util.logging.Logger;
 
 
 public class PlayBehaviour extends AchieveREInitiator {
-    private final ResponderBehaviour parent;
+    private final ResponderBehaviour parentBehaviour;
+    private final ACLMessage messageTemplate;
     private static final int FIELDS = 5;
     private final AID arbitrator;
 
-    public PlayBehaviour(Agent a, ACLMessage msg, ResponderBehaviour parent, AID arbitrator) {
+    public PlayBehaviour(Agent a, ACLMessage msg, ResponderBehaviour parentBehaviour, AID arbitrator) {
         super(a, msg);
-        this.parent = parent;
+        System.out.println(msg);
+        this.parentBehaviour = parentBehaviour;
         this.arbitrator = arbitrator;
+        this.messageTemplate = msg;
     }
 
     @Override
     protected Vector prepareRequests(ACLMessage request) {
         // Split and set units
         Vector<ACLMessage> result = new Vector<ACLMessage>();
-        ACLMessage resMsg = (ACLMessage)request.clone();
+        ACLMessage resMsg = (ACLMessage)messageTemplate.clone();
 
         DataStore store = getDataStore();
         BlottoAgent agent = (BlottoAgent)myAgent;
 
-        ACLMessage accept = (ACLMessage)store.get(parent.ACCEPT_PROPOSAL_KEY);
+        ACLMessage accept = (ACLMessage)store.get(parentBehaviour.ACCEPT_PROPOSAL_KEY);
         int othersUnits = agent.extractCommittedUnits(accept).getValue();
-        GetBlottoResult requestAction = new GetBlottoResult(allocateUnits(othersUnits + parent.givenUnits));
+        GetBlottoResult requestAction = new GetBlottoResult(allocateUnits(othersUnits + parentBehaviour.givenUnits));
 
         try {
             myAgent.getContentManager().fillContent(resMsg, new Action(arbitrator, requestAction));
