@@ -37,18 +37,21 @@ public class BlottoOntology extends Ontology {
             add(ps, CommittedUnits.class);
             ps.add(VALUE, getSchema(BasicOntology.INTEGER), ConceptSchema.MANDATORY);
 
-            // BlottoResult predicate
+            // PlayBlotto action.
+            AgentActionSchema as = new AgentActionSchema(PLAY_BLOTTO);
+            add(as, PlayBlotto.class);
+
+            // BlottoResult predicate.
             PredicateSchema ps2 = new PredicateSchema(BLOTTO_RESULT);
             add(ps2, BlottoResult.class);
             ps2.add(RESULT, getSchema(BasicOntology.INTEGER), ConceptSchema.MANDATORY);
 
-            // Allocation concept
+            // Allocation concept.
             ConceptSchema cs = new ConceptSchema(ALLOCATION);
             add(cs, Allocation.class);
-            // TODO co to za inty?
             cs.add(ASSIGNMENT, getSchema(BasicOntology.INTEGER), 0, -1, "sequence", 0);
 
-            // GetBlottoResult action
+            // GetBlottoResult action.
             AgentActionSchema as2 = new AgentActionSchema(GET_BLOTTO_RESULT);
             add(as2, GetBlottoResult.class);
             as2.add(ALLOCATION, (ConceptSchema) getSchema(ALLOCATION), ConceptSchema.MANDATORY);

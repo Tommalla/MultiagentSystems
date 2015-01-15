@@ -4,8 +4,7 @@ import jade.content.Predicate;
 public class CommittedUnits implements Predicate {
     private int value;
 
-    public CommittedUnits()
-    {
+    public CommittedUnits() {
         value = 0;
     }
 
@@ -19,7 +18,7 @@ public class CommittedUnits implements Predicate {
         return value;
     }
 
-    public void setValue (int result)
+    public void setValue (int value)
     {
         this.value = value;
     }

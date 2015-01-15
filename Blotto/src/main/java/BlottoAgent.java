@@ -1,7 +1,9 @@
+import jade.content.ContentElementList;
 import jade.content.ContentManager;
 import jade.content.lang.Codec;
 import jade.content.lang.sl.SLCodec;
 import jade.content.onto.OntologyException;
+import jade.content.onto.basic.Action;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
@@ -84,6 +86,40 @@ public class BlottoAgent extends Agent {
         return result;
     }
 
+
+    public Action extractPlayBlottoAction(ACLMessage request) {
+        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
+        {
+            throw new IllegalArgumentException(
+                    "Unrecognized content language: '" + request.getLanguage() +
+                            "'I recognize fipa-sl content only.");
+        }
+
+        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology()))
+        {
+            throw new IllegalArgumentException("Unrecognized ontology: I recognize blotto-ontology only.");
+        }
+
+        ContentManager cm = getContentManager();
+        try
+        {
+            return (Action)((ContentElementList)cm.extractContent(request)).get(0);
+        }
+        catch (Codec.CodecException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+        catch (OntologyException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+        catch (NullPointerException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+    }
+
+
     public CommittedUnits extractCommittedUnits(ACLMessage request) {
         // Extracting committed units.
 
@@ -103,7 +139,8 @@ public class BlottoAgent extends Agent {
         try
         {
             // FIXME!!!
-            return (CommittedUnits) cm.extractContent(request);
+            System.out.println(request);
+            return (CommittedUnits)((ContentElementList)cm.extractContent(request)).get(1);
         }
         catch (Codec.CodecException ex)
         {

@@ -1,6 +1,7 @@
 import jade.content.ContentElementList;
 import jade.content.lang.Codec;
 import jade.content.onto.OntologyException;
+import jade.content.onto.basic.Action;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
@@ -34,6 +35,7 @@ public class InitiatorBehaviour extends ContractNetInitiator {
 
             // Try to give all units.
             ContentElementList cel = new ContentElementList();
+            cel.add(new Action(agentAID, new PlayBlotto()));
             cel.add(new CommittedUnits(1));
             try
             {
@@ -64,6 +66,7 @@ public class InitiatorBehaviour extends ContractNetInitiator {
 
         if (agent.units > 0) {
             ContentElementList cel = new ContentElementList();
+            cel.add(agent.extractPlayBlottoAction(propose));
             cel.add(new CommittedUnits(agent.units));
             givenUnits = agent.units;
             agent.units = 0;
@@ -84,15 +87,14 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         } else {
             msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
         }
-        
+
         acceptances.add(msg);
     }
 
     @Override
     protected void handleFailure(ACLMessage failure) {
-        int unitsReturned = ((BlottoAgent)myAgent).extractCommittedUnits(failure).getValue();
-        ((BlottoAgent)myAgent).units += unitsReturned;
-        // FIXME handle sanity checks?
+        ((BlottoAgent)myAgent).units += givenUnits;
+        givenUnits = 0;
     }
 
 

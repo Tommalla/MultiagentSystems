@@ -31,6 +31,7 @@ public class ResponderBehaviour extends ContractNetResponder {
 
             // Try to give all units.
             ContentElementList cel = new ContentElementList();
+            cel.add(agent.extractPlayBlottoAction(cfp));
             cel.add(new CommittedUnits(agent.units));
             givenUnits = agent.units;
             agent.units = 0;
