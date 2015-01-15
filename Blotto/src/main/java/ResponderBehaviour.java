@@ -1,18 +1,39 @@
 import jade.content.ContentElementList;
 import jade.content.lang.Codec;
 import jade.content.onto.OntologyException;
+import jade.core.AID;
 import jade.core.Agent;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class ResponderBehaviour extends ContractNetResponder {
     public int givenUnits = 0;
+    private static Logger logger = Logger.getLogger(ResponderBehaviour.class.getName());
 
     public ResponderBehaviour(Agent a, MessageTemplate mt) {
         super(a, mt);
-        registerHandleAcceptProposal(new PlayBehaviour(a, this));
+        try {
+            AID arbitrator = getArbitrator();
+            ACLMessage playMsg = new ACLMessage(ACLMessage.REQUEST);
+            playMsg.addReceiver(arbitrator);
+            playMsg.addReplyTo(myAgent.getAID());
+            playMsg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+            playMsg.setLanguage(FIPANames.ContentLanguage.FIPA_SL);
+            playMsg.setOntology(BlottoOntology.ONTOLOGY_NAME);
+
+            registerHandleAcceptProposal(new PlayBehaviour(a, playMsg, this, arbitrator));
+        } catch (FIPAException ex) {
+            logger.severe("Couldn't find arbitrator: " + ex.getMessage());
+        }
     }
 
     @Override
@@ -53,5 +74,14 @@ public class ResponderBehaviour extends ContractNetResponder {
         }
 
         return response;
+    }
+
+    private AID getArbitrator() throws FIPAException {
+        DFAgentDescription temp = new DFAgentDescription();
+        final ServiceDescription sd = new ServiceDescription();
+        sd.setType("Blotto-Play");
+        temp.addServices(sd);
+        // We return the first one that fits the description.
+        return DFService.search(myAgent, temp)[0].getName();
     }
 }
