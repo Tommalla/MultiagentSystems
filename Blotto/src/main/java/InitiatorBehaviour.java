@@ -57,6 +57,20 @@ public class InitiatorBehaviour extends ContractNetInitiator {
 
     @Override
     protected void handlePropose(ACLMessage propose, Vector acceptances) {
-        System.out.println("handlePropose");
+        // TODO: get committed units
+        // Accept/refuse
+        int unitsNeeded = ((BlottoAgent)myAgent).extractCommittedUnits(propose).getValue();
+        ACLMessage msg = propose.createReply();
+        // We repeat the content of the proposal.
+        msg.setContent(propose.getContent());
+
+        if (((BlottoAgent)myAgent).units >= unitsNeeded) {
+            ((BlottoAgent)myAgent).units -= unitsNeeded;
+            msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+        } else {
+            msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
+        }
+
+        acceptances.add(msg);
     }
 }

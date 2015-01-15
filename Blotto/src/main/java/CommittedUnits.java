@@ -2,7 +2,7 @@ import jade.content.Predicate;
 
 
 public class CommittedUnits implements Predicate {
-    int value;
+    private int value;
 
     public CommittedUnits()
     {
