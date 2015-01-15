@@ -72,4 +72,13 @@ public class InitiatorBehaviour extends ContractNetInitiator {
 
         acceptances.add(msg);
     }
+
+    @Override
+    protected void handleFailure(ACLMessage failure) {
+        int unitsReturned = ((BlottoAgent)myAgent).extractCommittedUnits(failure).getValue();
+        ((BlottoAgent)myAgent).units += unitsReturned;
+        // FIXME handle sanity checks?
+    }
+
+
 }
