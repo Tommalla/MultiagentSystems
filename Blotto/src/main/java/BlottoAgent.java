@@ -64,17 +64,16 @@ public class BlottoAgent extends Agent {
     }
 
     public List<AID> getAgentsFromDF() {
-       List<AID> result = new LinkedList<AID>();
+        List<AID> result = new LinkedList<AID>();
 
-        DFAgentDescription temp = new DFAgentDescription();
+        DFAgentDescription agentDescription = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
         sd.setType("Blotto");
-        temp.addServices(sd);
+        agentDescription.addServices(sd);
         try {
-            for (DFAgentDescription description : DFService.search(this, temp)) {
+            for (DFAgentDescription description : DFService.search(this, agentDescription)) {
                 final AID aid = description.getName();
                 if (!aid.equals(getAID())) {
-                    System.out.println("[Description]" + aid);
                     result.add(aid);
                 }
             }

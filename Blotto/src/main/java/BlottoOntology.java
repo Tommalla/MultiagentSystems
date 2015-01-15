@@ -1,6 +1,7 @@
 import jade.content.onto.BasicOntology;
 import jade.content.onto.Ontology;
 import jade.content.onto.OntologyException;
+import jade.content.schema.AgentActionSchema;
 import jade.content.schema.ConceptSchema;
 import jade.content.schema.PredicateSchema;
 
@@ -31,10 +32,26 @@ public class BlottoOntology extends Ontology {
 
         try
         {
-            // CommitedUnits predicate
+            // CommitedUnits predicate.
             PredicateSchema ps = new PredicateSchema(COMMITTED_UNITS);
             add(ps, CommittedUnits.class);
             ps.add(VALUE, getSchema(BasicOntology.INTEGER), ConceptSchema.MANDATORY);
+
+            // BlottoResult predicate
+            PredicateSchema ps2 = new PredicateSchema(BLOTTO_RESULT);
+            add(ps2, BlottoResult.class);
+            ps2.add(RESULT, getSchema(BasicOntology.INTEGER), ConceptSchema.MANDATORY);
+
+            // Allocation concept
+            ConceptSchema cs = new ConceptSchema(ALLOCATION);
+            add(cs, Allocation.class);
+            // TODO co to za inty?
+            cs.add(ASSIGNMENT, getSchema(BasicOntology.INTEGER), 0, -1, "sequence", 0);
+
+            // GetBlottoResult action
+            AgentActionSchema as2 = new AgentActionSchema(GET_BLOTTO_RESULT);
+            add(as2, GetBlottoResult.class);
+            as2.add(ALLOCATION, (ConceptSchema) getSchema(ALLOCATION), ConceptSchema.MANDATORY);
         }
         catch (OntologyException ex)
         {
