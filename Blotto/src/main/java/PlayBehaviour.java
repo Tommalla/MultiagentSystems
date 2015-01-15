@@ -1,47 +1,75 @@
+import jade.content.ContentElementList;
+import jade.content.lang.Codec;
+import jade.content.onto.OntologyException;
+import jade.content.onto.basic.Action;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.DataStore;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
-import jade.proto.ContractNetResponder;
+import jade.util.leap.ArrayList;
+import jade.util.leap.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
 public class PlayBehaviour extends Behaviour {
     private boolean finished = false;
-    private ContractNetResponder parent;
-    private static final int fields = 5;
+    private ResponderBehaviour parent;
+    private static final int FIELDS = 5;
 
-    public PlayBehaviour(Agent a, ContractNetResponder parent) {
+    public PlayBehaviour(Agent a, ResponderBehaviour parent) {
         super(a);
         this.parent = parent;
     }
 
     @Override
     public void action() {
-        ACLMessage accept = ((ACLMessage)getDataStore().get(parent.ACCEPT_PROPOSAL_KEY));
-        int neededUnits = ((BlottoAgent)myAgent).extractCommittedUnits(accept).getValue();
+        DataStore store = getDataStore();
+        BlottoAgent agent = (BlottoAgent)myAgent;
+
+        ACLMessage accept = (ACLMessage)store.get(parent.ACCEPT_PROPOSAL_KEY);
+        int othersUnits = agent.extractCommittedUnits(accept).getValue();
+
         ACLMessage msg = accept.createReply();
         boolean failure = false;
 
-        if (((BlottoAgent)myAgent).units >= neededUnits) {
-            ((BlottoAgent)myAgent).units -= neededUnits;
-            System.out.println("AcceptedProposal");
-            try {
-                AID arbitrator = getArbitrator();
-                // TODO initiate play behaviour.
+        System.out.println("AcceptedProposal");
+        try {
+            AID arbitrator = getArbitrator();
+            ACLMessage playMsg = new ACLMessage(ACLMessage.REQUEST);
+            playMsg.addReceiver(arbitrator);
+            playMsg.addReplyTo(myAgent.getAID());
+            playMsg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+            playMsg.setLanguage(FIPANames.ContentLanguage.FIPA_SL);
+            playMsg.setOntology(BlottoOntology.ONTOLOGY_NAME);
 
-                msg.setPerformative(ACLMessage.INFORM);
-                // TODO return the result.
-            } catch (FIPAException ex) {
-                Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, "Couldn't find the arbitrator,", ex);
-                failure = true;
+            // Split and set units
+            GetBlottoResult request = new GetBlottoResult(allocateUnits(othersUnits + parent.givenUnits));
+
+            try {
+                myAgent.getContentManager().fillContent(playMsg, new Action(arbitrator, request));
+                myAgent.send(playMsg);
+            } catch (Codec.CodecException ex) {
+                Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (OntologyException ex) {
+                Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else {
+
+            // Get the response:
+            ACLMessage response = myAgent.blockingReceive();
+
+            System.out.println("Arbitrator responded: " + response);
+
+            msg.setPerformative(ACLMessage.INFORM);
+            // TODO return the result.
+        } catch (FIPAException ex) {
+            Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, "Couldn't find the arbitrator,", ex);
             failure = true;
         }
 
@@ -51,6 +79,8 @@ public class PlayBehaviour extends Behaviour {
             msg.setContent(accept.getContent());
         }
 
+
+        store.put(parent.REPLY_KEY, msg);
         finished = true;
     }
 
@@ -66,5 +96,15 @@ public class PlayBehaviour extends Behaviour {
         temp.addServices(sd);
         // We return the first one that fits the description.
         return DFService.search(myAgent, temp)[0].getName();
+    }
+
+    private Allocation allocateUnits(int units) {
+        List resultList = new ArrayList();
+        for (int i = 0; i < FIELDS - 1; ++i) {
+            resultList.add(units / FIELDS);
+        }
+
+        resultList.add(units / FIELDS + (units % FIELDS));
+        return new Allocation(resultList);
     }
 }

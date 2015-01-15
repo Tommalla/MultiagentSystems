@@ -5,9 +5,8 @@ public class GetBlottoResult implements AgentAction
 {
     private Allocation allocation;
 
-    public void setAllocation(Allocation paramAllocation)
-    {
-        allocation = paramAllocation;
+    public GetBlottoResult(Allocation allocation) {
+        this.allocation = allocation;
     }
 
     public Allocation getAllocation()

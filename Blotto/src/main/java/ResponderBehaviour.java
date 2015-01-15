@@ -8,6 +8,7 @@ import jade.proto.ContractNetResponder;
 
 
 public class ResponderBehaviour extends ContractNetResponder {
+    public int givenUnits = 0;
 
     public ResponderBehaviour(Agent a, MessageTemplate mt) {
         super(a, mt);
@@ -18,17 +19,22 @@ public class ResponderBehaviour extends ContractNetResponder {
     protected ACLMessage handleCfp(ACLMessage cfp)
     {
         // Prepare the propose message to be sent in response
-        int minUnits = ((BlottoAgent)myAgent).extractCommittedUnits(cfp).getValue();
+        BlottoAgent agent = (BlottoAgent)myAgent;
+        int minUnits = agent.extractCommittedUnits(cfp).getValue();
         ACLMessage response = cfp.createReply();
 
-        if (minUnits < ((BlottoAgent)myAgent).units) {
+        System.out.println("Got CFP with minUnits: " + minUnits);
+
+        if (minUnits <= agent.units) {
             // We can, so let's propose.
             response.setPerformative(ACLMessage.PROPOSE);
 
             // Try to give all units.
             ContentElementList cel = new ContentElementList();
-            cel.add(new CommittedUnits(((BlottoAgent)myAgent).units));
-             try
+            cel.add(new CommittedUnits(agent.units));
+            givenUnits = agent.units;
+            agent.units = 0;
+            try
             {
                 myAgent.getContentManager().fillContent(response, cel);
             }
