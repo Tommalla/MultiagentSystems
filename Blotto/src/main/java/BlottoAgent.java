@@ -88,41 +88,15 @@ public class BlottoAgent extends Agent {
 
 
     public Action extractPlayBlottoAction(ACLMessage request) {
-        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
-        {
-            throw new IllegalArgumentException(
-                    "Unrecognized content language: '" + request.getLanguage() +
-                            "'I recognize fipa-sl content only.");
-        }
-
-        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology()))
-        {
-            throw new IllegalArgumentException("Unrecognized ontology: I recognize blotto-ontology only.");
-        }
-
-        ContentManager cm = getContentManager();
-        try
-        {
-            return (Action)((ContentElementList)cm.extractContent(request)).get(0);
-        }
-        catch (Codec.CodecException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (OntologyException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (NullPointerException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
+        return (Action)extractContentElement(request, 0);
     }
 
 
     public CommittedUnits extractCommittedUnits(ACLMessage request) {
-        // Extracting committed units.
+        return (CommittedUnits)extractContentElement(request, 1);
+    }
 
+    private Object extractContentElement(ACLMessage request, int index) {
         if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
         {
             throw new IllegalArgumentException(
@@ -138,9 +112,8 @@ public class BlottoAgent extends Agent {
         ContentManager cm = getContentManager();
         try
         {
-            // FIXME!!!
             System.out.println(request);
-            return (CommittedUnits)((ContentElementList)cm.extractContent(request)).get(1);
+            return ((ContentElementList)cm.extractContent(request)).get(index);
         }
         catch (Codec.CodecException ex)
         {
