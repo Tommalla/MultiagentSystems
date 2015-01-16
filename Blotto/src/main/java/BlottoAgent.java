@@ -24,6 +24,9 @@ import java.util.logging.Logger;
 
 public class BlottoAgent extends Agent {
     public int units;
+    // The current number of active propose or accept-proposal 'transactions'.
+    private int activeTransations = 0;
+    // Has all the necessary communication finished?
     private static final long WAIT_TIMEOUT = 60000;
     private List results = new ArrayList<String>();
 
@@ -50,8 +53,39 @@ public class BlottoAgent extends Agent {
     }
 
 
+    public void startTransaction(int unitsGiven) {
+        activeTransations++;
+        units -= unitsGiven;
+    }
+
+
+    // A successful finish of a transaction.
+    public void finishTransaction() {
+        activeTransations--;
+        if (isFinished()) {
+            // Please kill me after some timeout.
+            addBehaviour(new CloseBehaviour(this));
+        }
+    }
+
+
+    public void breakTransaction(int unitsRestored) {
+        activeTransations--;
+        units += unitsRestored;
+    }
+
+
     public WaitBehaviour getNewWaitBehaviour() {
         return new WaitBehaviour(this, WAIT_TIMEOUT);
+    }
+
+
+    public InitiatorBehaviour getNewInitiatorBehaviour() {
+        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+        cfp.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        cfp.setLanguage(FIPANames.ContentLanguage.FIPA_SL);
+        cfp.setOntology(BlottoOntology.ONTOLOGY_NAME);
+        return new InitiatorBehaviour(this, cfp);
     }
 
 
@@ -67,6 +101,11 @@ public class BlottoAgent extends Agent {
 
     public CommittedUnits extractCommittedUnits(ACLMessage request) {
         return (CommittedUnits)extractContentElement(request, 1);
+    }
+
+
+    public boolean isFinished() {
+        return units == 0 && activeTransations == 0;
     }
 
 
@@ -97,17 +136,18 @@ public class BlottoAgent extends Agent {
         getContentManager().registerOntology(BlottoOntology.getInstance());
 
         // Add the waiting behaviour.
-        this.addBehaviour(getNewWaitBehaviour());
+        addBehaviour(getNewWaitBehaviour());
 
         MessageTemplate mt = ContractNetResponder.createMessageTemplate(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         for (int i = 0; i < 7; ++i) {
-            this.addBehaviour(new ResponderBehaviour(this, mt));
+            addBehaviour(new ResponderBehaviour(this, mt));
         }
     }
 
 
     @Override
     protected void takeDown() {
+        System.out.println("TakeDown!");
         for (Object o: results) {
             System.out.println((String)o);
         }

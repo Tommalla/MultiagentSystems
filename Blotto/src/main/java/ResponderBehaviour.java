@@ -54,8 +54,9 @@ public class ResponderBehaviour extends ContractNetResponder {
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(cfp));
             cel.add(new CommittedUnits(agent.units));
-            givenUnits = agent.units;
-            agent.units = 0;
+
+            giveUnits(agent.units);
+
             try
             {
                 myAgent.getContentManager().fillContent(response, cel);
@@ -78,8 +79,7 @@ public class ResponderBehaviour extends ContractNetResponder {
 
     @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-        ((BlottoAgent)myAgent).units += givenUnits;
-        givenUnits = 0;
+        reclaimUnits();
     }
 
     private AID getArbitrator() throws FIPAException {
@@ -89,5 +89,17 @@ public class ResponderBehaviour extends ContractNetResponder {
         temp.addServices(sd);
         // We return the first one that fits the description.
         return DFService.search(myAgent, temp)[0].getName();
+    }
+
+
+    public void giveUnits(int given) {
+        ((BlottoAgent)myAgent).startTransaction(given);
+        givenUnits = given;
+    }
+
+
+    public void reclaimUnits() {
+        ((BlottoAgent)myAgent).breakTransaction(givenUnits);
+        givenUnits = 0;
     }
 }

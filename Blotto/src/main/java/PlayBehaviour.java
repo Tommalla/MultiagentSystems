@@ -75,11 +75,10 @@ public class PlayBehaviour extends AchieveREInitiator {
         getDataStore().put(parentBehaviour.REPLY_KEY, reply);
 
         if (result.getPerformative() == ACLMessage.INFORM) {
-            // Success, note it (TODO).
+            ((BlottoAgent)myAgent).finishTransaction();
         } else {
             // Failure, reset.
-            ((BlottoAgent)myAgent).units += parentBehaviour.givenUnits;
-            parentBehaviour.givenUnits = 0;
+            parentBehaviour.reclaimUnits();
         }
     }
 

@@ -18,9 +18,17 @@ public class InitiatorBehaviour extends ContractNetInitiator {
     private int givenUnits = 0;
     private static final long REPLY_TIMEOUT = 70000L;
 
+
     public InitiatorBehaviour(Agent a, ACLMessage cfp) {
         super(a, cfp);
     }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
 
     @Override
     protected Vector prepareCfps(ACLMessage cfp) {
@@ -56,6 +64,7 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         return msgs;
     }
 
+
     @Override
     protected void handlePropose(ACLMessage propose, Vector acceptances) {
         // Accept/refuse
@@ -68,8 +77,8 @@ public class InitiatorBehaviour extends ContractNetInitiator {
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(propose));
             cel.add(new CommittedUnits(agent.units));
-            givenUnits = agent.units;
-            agent.units = 0;
+
+            giveUnits(agent.units);
 
             try
             {
@@ -91,17 +100,41 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         acceptances.add(msg);
     }
 
+
     @Override
     protected void handleFailure(ACLMessage failure) {
-        ((BlottoAgent)myAgent).units += givenUnits;
-        givenUnits = 0;
+        reclaimUnits();
     }
+
+
+    @Override
+    protected void handleInform(ACLMessage inform) {
+        BlottoAgent agent = (BlottoAgent)myAgent;
+        agent.finishTransaction();
+    }
+
 
     @Override
     public int onEnd() {
-        myAgent.addBehaviour(((BlottoAgent)myAgent).getNewWaitBehaviour());
-        myAgent.removeBehaviour(this);
+        BlottoAgent agent = (BlottoAgent)myAgent;
+        if (!agent.isFinished()) {
+            agent.addBehaviour(agent.getNewWaitBehaviour());
+        }
+
+        agent.removeBehaviour(this);
         return super.onEnd();
+    }
+
+
+    private void giveUnits(int given) {
+        ((BlottoAgent)myAgent).startTransaction(given);
+        givenUnits = given;
+    }
+
+
+    private void reclaimUnits() {
+        ((BlottoAgent)myAgent).breakTransaction(givenUnits);
+        givenUnits = 0;
     }
 
 }
