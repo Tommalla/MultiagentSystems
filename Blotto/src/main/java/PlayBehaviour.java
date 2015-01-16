@@ -69,13 +69,17 @@ public class PlayBehaviour extends AchieveREInitiator {
         System.out.println(">>>> Got a result notification!!!");
 
         DataStore store = getDataStore();
-        ACLMessage reply = ((ACLMessage)store.get(parentBehaviour.ACCEPT_PROPOSAL_KEY)).createReply();
+        ACLMessage acceptProposal = ((ACLMessage)store.get(parentBehaviour.ACCEPT_PROPOSAL_KEY));
+        ACLMessage reply = acceptProposal.createReply();
         reply.setPerformative(result.getPerformative());
         reply.setContent(result.getContent());
         getDataStore().put(parentBehaviour.REPLY_KEY, reply);
 
         if (result.getPerformative() == ACLMessage.INFORM) {
-            ((BlottoAgent)myAgent).finishTransaction();
+            BlottoAgent agent = (BlottoAgent)myAgent;
+            agent.finishTransaction();
+            agent.addResult(acceptProposal.getSender().getLocalName(),
+                agent.extractBlottoResult(result).getResult());
         } else {
             // Failure, reset.
             parentBehaviour.reclaimUnits();

@@ -104,6 +104,40 @@ public class BlottoAgent extends Agent {
     }
 
 
+    public BlottoResult extractBlottoResult(ACLMessage request) {
+        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
+        {
+            throw new IllegalArgumentException(
+                    "Unrecognized content language: '" + request.getLanguage() +
+                            "'I recognize fipa-sl content only.");
+        }
+
+        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology()))
+        {
+            throw new IllegalArgumentException("Unrecognized ontology: I recognize blotto-ontology only.");
+        }
+
+        ContentManager cm = getContentManager();
+        try
+        {
+            System.out.println(request);
+            return (BlottoResult)cm.extractContent(request);
+        }
+        catch (Codec.CodecException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+        catch (OntologyException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+        catch (NullPointerException ex)
+        {
+            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        }
+    }
+
+
     public boolean isFinished() {
         return units == 0 && activeTransations == 0;
     }

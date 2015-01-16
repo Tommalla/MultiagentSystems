@@ -111,6 +111,8 @@ public class InitiatorBehaviour extends ContractNetInitiator {
     protected void handleInform(ACLMessage inform) {
         BlottoAgent agent = (BlottoAgent)myAgent;
         agent.finishTransaction();
+        agent.addResult(inform.getSender().getLocalName(),
+                agent.extractBlottoResult(inform).getResult());
     }
 
 
