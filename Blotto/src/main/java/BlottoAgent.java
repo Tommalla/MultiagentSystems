@@ -55,7 +55,9 @@ public class BlottoAgent extends Agent {
         this.addBehaviour(new WaitBehaviour(this, timeout));
 
         MessageTemplate mt = ContractNetResponder.createMessageTemplate(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-        this.addBehaviour(new ResponderBehaviour(this, mt));
+        for (int i = 0; i < 7; ++i) {
+            this.addBehaviour(new ResponderBehaviour(this, mt));
+        }
     }
 
     @Override

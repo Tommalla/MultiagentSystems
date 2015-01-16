@@ -18,10 +18,10 @@ public class PlayBehaviour extends AchieveREInitiator {
     private final ACLMessage messageTemplate;
     private static final int FIELDS = 5;
     private final AID arbitrator;
+    private static final Logger logger = Logger.getLogger(PlayBehaviour.class.getName());
 
     public PlayBehaviour(Agent a, ACLMessage msg, ResponderBehaviour parentBehaviour, AID arbitrator) {
         super(a, msg);
-        System.out.println(msg);
         this.parentBehaviour = parentBehaviour;
         this.arbitrator = arbitrator;
         this.messageTemplate = msg;
@@ -52,58 +52,44 @@ public class PlayBehaviour extends AchieveREInitiator {
         return result;
     }
 
+    @Override
+    protected void handleAllResponses(Vector responses) {
+        for (Object o : responses)
+        {
+            ACLMessage response = (ACLMessage) o;
+            if (response.getPerformative() != ACLMessage.AGREE) {
+                throw new IllegalArgumentException("An error while communicating with arbitor: " + response.getContent());
+            }
+        }
+    }
+
+    @Override
+    protected void handleAllResultNotifications(Vector resultNotifications) {
+        ACLMessage result = (ACLMessage) resultNotifications.get(0);
+        System.out.println(">>>> Got a result notification!!!");
+
+        DataStore store = getDataStore();
+        ACLMessage reply = ((ACLMessage)store.get(parentBehaviour.ACCEPT_PROPOSAL_KEY)).createReply();
+        reply.setPerformative(result.getPerformative());
+        reply.setContent(result.getContent());
+        getDataStore().put(parentBehaviour.REPLY_KEY, reply);
+
+        if (result.getPerformative() == ACLMessage.INFORM) {
+            // Success, note it (TODO).
+        } else {
+            // Failure, reset.
+            ((BlottoAgent)myAgent).units += parentBehaviour.givenUnits;
+            parentBehaviour.givenUnits = 0;
+        }
+    }
+
+    @Override
+    public int onEnd() {
+        System.out.println("Ending...");
+        return super.onEnd(); //To change body of generated methods, choose Tools | Templates.
+    }
 
 
-//    @Override
-//    public void action() {
-//        DataStore store = getDataStore();
-//        BlottoAgent agent = (BlottoAgent)myAgent;
-//
-//        ACLMessage accept = (ACLMessage)store.get(parent.ACCEPT_PROPOSAL_KEY);
-//        int othersUnits = agent.extractCommittedUnits(accept).getValue();
-//
-//        ACLMessage msg = accept.createReply();
-//        boolean failure = false;
-//
-//        System.out.println("AcceptedProposal");
-//        try {
-//
-//
-//            // Split and set units
-//            GetBlottoResult request = new GetBlottoResult(allocateUnits(othersUnits + parent.givenUnits));
-//
-//            try {
-//                myAgent.getContentManager().fillContent(playMsg, new Action(arbitrator, request));
-//                myAgent.send(playMsg);
-//            } catch (Codec.CodecException ex) {
-//                Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (OntologyException ex) {
-//                Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//
-//            // Get the response:
-//            ACLMessage response = myAgent.blockingReceive();
-//
-//            System.out.println("Arbitrator responded: " + response);
-//            // Need to properly react to this...
-//
-//            msg.setPerformative(ACLMessage.INFORM);
-//            // TODO return the result.
-//        } catch (FIPAException ex) {
-//            Logger.getLogger(PlayBehaviour.class.getName()).log(Level.SEVERE, "Couldn't find the arbitrator,", ex);
-//            failure = true;
-//        }
-//
-//        if (failure) {
-//            msg.setPerformative(ACLMessage.FAILURE);
-//            // FIXME add reason here.
-//            msg.setContent(accept.getContent());
-//        }
-//
-//
-//        store.put(parent.REPLY_KEY, msg);
-//        finished = true;
-//    }
 
     private Allocation allocateUnits(int units) {
         List resultList = new ArrayList();

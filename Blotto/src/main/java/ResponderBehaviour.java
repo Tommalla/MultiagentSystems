@@ -82,7 +82,6 @@ public class ResponderBehaviour extends ContractNetResponder {
         givenUnits = 0;
     }
 
-
     private AID getArbitrator() throws FIPAException {
         DFAgentDescription temp = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
