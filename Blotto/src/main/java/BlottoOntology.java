@@ -4,6 +4,8 @@ import jade.content.onto.OntologyException;
 import jade.content.schema.AgentActionSchema;
 import jade.content.schema.ConceptSchema;
 import jade.content.schema.PredicateSchema;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class BlottoOntology extends Ontology {
@@ -20,18 +22,19 @@ public class BlottoOntology extends Ontology {
     // Handy.
     public static final String VALUE = "value";
     public static final String TEXT = "text";
+    private static final Logger logger = Logger.getLogger(BlottoOntology.class.getName());
 
-    // Singleton
+    // Singleton.
     private static final Ontology instance = new BlottoOntology();
     public static Ontology getInstance() {
         return instance;
     }
 
+
     private BlottoOntology() {
         super(ONTOLOGY_NAME, BasicOntology.getInstance());
 
-        try
-        {
+        try {
             // CommitedUnits predicate.
             PredicateSchema ps = new PredicateSchema(COMMITTED_UNITS);
             add(ps, CommittedUnits.class);
@@ -55,10 +58,8 @@ public class BlottoOntology extends Ontology {
             AgentActionSchema as2 = new AgentActionSchema(GET_BLOTTO_RESULT);
             add(as2, GetBlottoResult.class);
             as2.add(ALLOCATION, (ConceptSchema) getSchema(ALLOCATION), ConceptSchema.MANDATORY);
-        }
-        catch (OntologyException ex)
-        {
-            ex.printStackTrace();
+        } catch (OntologyException ex) {
+            logger.log(Level.SEVERE, "Ontology error: {0}", ex.getMessage());
         }
     }
 }

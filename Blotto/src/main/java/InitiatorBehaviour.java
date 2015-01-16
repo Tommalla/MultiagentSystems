@@ -1,6 +1,4 @@
 import jade.content.ContentElementList;
-import jade.content.lang.Codec;
-import jade.content.onto.OntologyException;
 import jade.content.onto.basic.Action;
 import jade.core.AID;
 import jade.core.Agent;
@@ -9,24 +7,21 @@ import jade.proto.ContractNetInitiator;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Logger;
 
 
 public class InitiatorBehaviour extends ContractNetInitiator {
+    private static final Logger logger = Logger.getLogger(InitiatorBehaviour.class.getName());
+    private static final long REPLY_TIMEOUT = 70000L;
+    private final Random rand = new Random();
 
     private int givenUnits = 0;
-    private static final long REPLY_TIMEOUT = 70000L;
 
 
     public InitiatorBehaviour(Agent a, ACLMessage cfp) {
         super(a, cfp);
-    }
-
-
-    @Override
-    public void onStart() {
-        super.onStart();
     }
 
 
@@ -41,26 +36,15 @@ public class InitiatorBehaviour extends ContractNetInitiator {
             newMsg.setReplyByDate(new Date(
                     Calendar.getInstance().getTime().getTime() + REPLY_TIMEOUT));
 
-            // Try to give all units.
             ContentElementList cel = new ContentElementList();
             cel.add(new Action(agentAID, new PlayBlotto()));
-            cel.add(new CommittedUnits(1));
-            try
-            {
-                myAgent.getContentManager().fillContent(newMsg, cel);
-            }
-            catch (Codec.CodecException ex)
-            {
-                // ignore
-            }
-            catch (OntologyException ex)
-            {
-                // ignore
-            }
+            cel.add(new CommittedUnits(1)); // Anything more than 0;
+
+            ((BlottoAgent)myAgent).fillMessage(newMsg, cel);
 
             msgs.add(newMsg);
         }
-        System.out.println(getDataStore());
+
         return msgs;
     }
 
@@ -71,26 +55,15 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         BlottoAgent agent = (BlottoAgent)myAgent;
         ACLMessage msg = propose.createReply();
 
-
         if (agent.getUnits() > 0) {
+
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(propose));
             cel.add(new CommittedUnits(agent.getUnits()));
-
             giveUnits(agent.getUnits());
 
-            try
-            {
-                myAgent.getContentManager().fillContent(msg, cel);
-            }
-            catch (Codec.CodecException ex)
-            {
-                // ignore
-            }
-            catch (OntologyException ex)
-            {
-                // ignore
-            }
+            agent.fillMessage(msg, cel);
+
             msg.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
         } else {
             msg.setPerformative(ACLMessage.REJECT_PROPOSAL);
@@ -119,7 +92,8 @@ public class InitiatorBehaviour extends ContractNetInitiator {
     public int onEnd() {
         BlottoAgent agent = (BlottoAgent)myAgent;
         if (!agent.isFinished()) {
-            agent.addBehaviour(agent.getNewWaitBehaviour());
+            // If not finished, readd.
+            agent.addBehaviour(agent.getNewWaitBehaviour(rand.nextLong() % 5000L));
         }
 
         agent.removeBehaviour(this);

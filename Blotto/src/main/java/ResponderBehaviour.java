@@ -1,6 +1,4 @@
 import jade.content.ContentElementList;
-import jade.content.lang.Codec;
-import jade.content.onto.OntologyException;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
@@ -11,12 +9,13 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
 public class ResponderBehaviour extends ContractNetResponder {
     public int givenUnits = 0;
-    private static Logger logger = Logger.getLogger(ResponderBehaviour.class.getName());
+    private static final Logger logger = Logger.getLogger(ResponderBehaviour.class.getName());
 
     public ResponderBehaviour(Agent a, MessageTemplate mt) {
         super(a, mt);
@@ -31,9 +30,10 @@ public class ResponderBehaviour extends ContractNetResponder {
 
             registerHandleAcceptProposal(new PlayBehaviour(a, playMsg, this, arbitrator));
         } catch (FIPAException ex) {
-            logger.severe("Couldn't find arbitrator: " + ex.getMessage());
+            logger.log(Level.SEVERE, "Couldn't find arbitrator: {0}", ex.getMessage());
         }
     }
+
 
     @Override
     protected ACLMessage handleCfp(ACLMessage cfp)
@@ -43,43 +43,34 @@ public class ResponderBehaviour extends ContractNetResponder {
         int minUnits = agent.extractCommittedUnits(cfp).getValue();
         ACLMessage response = cfp.createReply();
 
-        System.out.println("Got CFP with minUnits: " + minUnits);
-
         if (minUnits <= agent.getUnits()) {
             // We can, so let's propose.
             response.setPerformative(ACLMessage.PROPOSE);
 
             // Try to give all units.
+
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(cfp));
             cel.add(new CommittedUnits(agent.getUnits()));
 
             giveUnits(agent.getUnits());
 
-            try
-            {
-                myAgent.getContentManager().fillContent(response, cel);
-            }
-            catch (Codec.CodecException ex)
-            {
-                // ignore
-            }
-            catch (OntologyException ex)
-            {
-                // ignore
-            }
+            agent.fillMessage(response, cel);
         } else {
             // Not enough units.
+            response.setContent("Too many units requested.");
             response.setPerformative(ACLMessage.REFUSE);
         }
 
         return response;
     }
 
+
     @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
         reclaimUnits();
     }
+
 
     private AID getArbitrator() throws FIPAException {
         DFAgentDescription temp = new DFAgentDescription();

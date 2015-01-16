@@ -1,3 +1,4 @@
+import jade.content.ContentElement;
 import jade.content.ContentElementList;
 import jade.content.ContentManager;
 import jade.content.lang.Codec;
@@ -17,7 +18,6 @@ import jade.proto.ContractNetResponder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -87,8 +87,8 @@ public class BlottoAgent extends Agent {
     }
 
 
-    public WaitBehaviour getNewWaitBehaviour() {
-        return new WaitBehaviour(this, WAIT_TIMEOUT);
+    public WaitBehaviour getNewWaitBehaviour(long timeout) {
+        return new WaitBehaviour(this, timeout);
     }
 
 
@@ -121,6 +121,17 @@ public class BlottoAgent extends Agent {
     }
 
 
+    public void fillMessage(ACLMessage msg, ContentElement ce) {
+        try {
+                getContentManager().fillContent(msg, ce);
+        } catch (Codec.CodecException ex) {
+            logger.log(Level.SEVERE, "Couldn't construct message: {0}", ex.getMessage());
+        } catch (OntologyException ex) {
+            logger.log(Level.SEVERE, "Couldn't construct message: {0}", ex.getMessage());
+        }
+    }
+
+
     @Override
     protected void setup() {
         // Get the number of units.
@@ -148,7 +159,7 @@ public class BlottoAgent extends Agent {
         getContentManager().registerOntology(BlottoOntology.getInstance());
 
         // Add the waiting behaviour.
-        addBehaviour(getNewWaitBehaviour());
+        addBehaviour(getNewWaitBehaviour(WAIT_TIMEOUT));
 
         MessageTemplate mt = ContractNetResponder.createMessageTemplate(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         for (int i = 0; i < 7; ++i) {
