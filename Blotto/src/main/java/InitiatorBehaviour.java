@@ -60,6 +60,7 @@ public class InitiatorBehaviour extends ContractNetInitiator {
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(propose));
             cel.add(new CommittedUnits(agent.getUnits()));
+            cel.add(agent.extractCommittedUnits(propose));
             giveUnits(agent.getUnits());
 
             agent.fillMessage(msg, cel);

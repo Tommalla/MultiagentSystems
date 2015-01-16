@@ -7,11 +7,9 @@ import jade.proto.AchieveREInitiator;
 import jade.util.leap.ArrayList;
 import jade.util.leap.List;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 
 public class PlayBehaviour extends AchieveREInitiator {
-    private static final Logger logger = Logger.getLogger(PlayBehaviour.class.getName());
     private static final int FIELDS = 5;
 
     private final ResponderBehaviour parentBehaviour;
@@ -72,7 +70,7 @@ public class PlayBehaviour extends AchieveREInitiator {
             BlottoAgent agent = (BlottoAgent)myAgent;
             agent.finishTransaction();
             agent.addResult(acceptProposal.getSender().getLocalName(),
-                agent.extractBlottoResult(result).getResult());
+                    agent.extractBlottoResult(result).getResult());
         } else {
             // Failure, reset.
             parentBehaviour.reclaimUnits();

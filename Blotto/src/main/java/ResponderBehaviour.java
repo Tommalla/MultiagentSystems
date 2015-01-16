@@ -78,7 +78,12 @@ public class ResponderBehaviour extends ContractNetResponder {
         sd.setType("Blotto-Play");
         temp.addServices(sd);
         // We return the first one that fits the description.
-        return DFService.search(myAgent, temp)[0].getName();
+        try {
+            return DFService.search(myAgent, temp)[0].getName();
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            logger.severe("There's no arbitrator in the DF!");
+            throw ex;
+        }
     }
 
 
