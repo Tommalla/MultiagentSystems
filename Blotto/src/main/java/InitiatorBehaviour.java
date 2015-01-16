@@ -97,5 +97,11 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         givenUnits = 0;
     }
 
+    @Override
+    public int onEnd() {
+        myAgent.addBehaviour(((BlottoAgent)myAgent).getNewWaitBehaviour());
+        myAgent.removeBehaviour(this);
+        return super.onEnd();
+    }
 
 }

@@ -14,6 +14,7 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,7 +24,51 @@ import java.util.logging.Logger;
 
 public class BlottoAgent extends Agent {
     public int units;
-    private static final long timeout = 60000;
+    private static final long WAIT_TIMEOUT = 60000;
+    private List results = new ArrayList<String>();
+
+
+    public List<AID> getAgentsFromDF() {
+        List<AID> result = new LinkedList<AID>();
+
+        DFAgentDescription agentDescription = new DFAgentDescription();
+        final ServiceDescription sd = new ServiceDescription();
+        sd.setType("Blotto");
+        agentDescription.addServices(sd);
+        try {
+            for (DFAgentDescription description : DFService.search(this, agentDescription)) {
+                final AID aid = description.getName();
+                if (!aid.equals(getAID())) {
+                    result.add(aid);
+                }
+            }
+        } catch (FIPAException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+
+    public WaitBehaviour getNewWaitBehaviour() {
+        return new WaitBehaviour(this, WAIT_TIMEOUT);
+    }
+
+
+    public void addResult(String otherAgent, int result) {
+        results.add(getLocalName() + " & " + otherAgent + ": " + result);
+    }
+
+
+    public Action extractPlayBlottoAction(ACLMessage request) {
+        return (Action)extractContentElement(request, 0);
+    }
+
+
+    public CommittedUnits extractCommittedUnits(ACLMessage request) {
+        return (CommittedUnits)extractContentElement(request, 1);
+    }
+
 
     @Override
     protected void setup() {
@@ -52,7 +97,7 @@ public class BlottoAgent extends Agent {
         getContentManager().registerOntology(BlottoOntology.getInstance());
 
         // Add the waiting behaviour.
-        this.addBehaviour(new WaitBehaviour(this, timeout));
+        this.addBehaviour(getNewWaitBehaviour());
 
         MessageTemplate mt = ContractNetResponder.createMessageTemplate(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         for (int i = 0; i < 7; ++i) {
@@ -60,43 +105,18 @@ public class BlottoAgent extends Agent {
         }
     }
 
+
     @Override
     protected void takeDown() {
+        for (Object o: results) {
+            System.out.println((String)o);
+        }
+
         try {
             DFService.deregister(this);
         } catch (FIPAException e) {}
     }
 
-    public List<AID> getAgentsFromDF() {
-        List<AID> result = new LinkedList<AID>();
-
-        DFAgentDescription agentDescription = new DFAgentDescription();
-        final ServiceDescription sd = new ServiceDescription();
-        sd.setType("Blotto");
-        agentDescription.addServices(sd);
-        try {
-            for (DFAgentDescription description : DFService.search(this, agentDescription)) {
-                final AID aid = description.getName();
-                if (!aid.equals(getAID())) {
-                    result.add(aid);
-                }
-            }
-        } catch (FIPAException e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-
-    public Action extractPlayBlottoAction(ACLMessage request) {
-        return (Action)extractContentElement(request, 0);
-    }
-
-
-    public CommittedUnits extractCommittedUnits(ACLMessage request) {
-        return (CommittedUnits)extractContentElement(request, 1);
-    }
 
     private Object extractContentElement(ACLMessage request, int index) {
         if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))

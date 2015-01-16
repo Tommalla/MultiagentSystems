@@ -83,13 +83,6 @@ public class PlayBehaviour extends AchieveREInitiator {
         }
     }
 
-    @Override
-    public int onEnd() {
-        System.out.println("Ending...");
-        return super.onEnd(); //To change body of generated methods, choose Tools | Templates.
-    }
-
-
 
     private Allocation allocateUnits(int units) {
         List resultList = new ArrayList();
