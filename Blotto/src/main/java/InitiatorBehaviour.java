@@ -71,14 +71,13 @@ public class InitiatorBehaviour extends ContractNetInitiator {
         BlottoAgent agent = (BlottoAgent)myAgent;
         ACLMessage msg = propose.createReply();
 
-        System.out.println("handlePropose with " + agent.units);
 
-        if (agent.units > 0) {
+        if (agent.getUnits() > 0) {
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(propose));
-            cel.add(new CommittedUnits(agent.units));
+            cel.add(new CommittedUnits(agent.getUnits()));
 
-            giveUnits(agent.units);
+            giveUnits(agent.getUnits());
 
             try
             {

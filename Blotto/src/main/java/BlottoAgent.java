@@ -23,12 +23,14 @@ import java.util.logging.Logger;
 
 
 public class BlottoAgent extends Agent {
-    public int units;
+    private static final String BLOTTO = "Blotto";
+    private static final long WAIT_TIMEOUT = 60000;
+    private static final Logger logger = Logger.getLogger(BlottoAgent.class.getName());
+    private int units;
     // The current number of active propose or accept-proposal 'transactions'.
     private int activeTransations = 0;
     // Has all the necessary communication finished?
-    private static final long WAIT_TIMEOUT = 60000;
-    private List results = new ArrayList<String>();
+    private final List results = new ArrayList<String>();
 
 
     public List<AID> getAgentsFromDF() {
@@ -36,7 +38,7 @@ public class BlottoAgent extends Agent {
 
         DFAgentDescription agentDescription = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
-        sd.setType("Blotto");
+        sd.setType(BLOTTO);
         agentDescription.addServices(sd);
         try {
             for (DFAgentDescription description : DFService.search(this, agentDescription)) {
@@ -46,10 +48,15 @@ public class BlottoAgent extends Agent {
                 }
             }
         } catch (FIPAException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Cannot get agents' list from DF: {0}", e.getMessage());
         }
 
         return result;
+    }
+
+
+    public int getUnits() {
+        return units;
     }
 
 
@@ -72,6 +79,11 @@ public class BlottoAgent extends Agent {
     public void breakTransaction(int unitsRestored) {
         activeTransations--;
         units += unitsRestored;
+    }
+
+
+    public boolean isFinished() {
+        return units == 0 && activeTransations == 0;
     }
 
 
@@ -105,41 +117,7 @@ public class BlottoAgent extends Agent {
 
 
     public BlottoResult extractBlottoResult(ACLMessage request) {
-        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
-        {
-            throw new IllegalArgumentException(
-                    "Unrecognized content language: '" + request.getLanguage() +
-                            "'I recognize fipa-sl content only.");
-        }
-
-        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology()))
-        {
-            throw new IllegalArgumentException("Unrecognized ontology: I recognize blotto-ontology only.");
-        }
-
-        ContentManager cm = getContentManager();
-        try
-        {
-            System.out.println(request);
-            return (BlottoResult)cm.extractContent(request);
-        }
-        catch (Codec.CodecException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (OntologyException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (NullPointerException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-    }
-
-
-    public boolean isFinished() {
-        return units == 0 && activeTransations == 0;
+        return (BlottoResult)extractContent(request);
     }
 
 
@@ -152,17 +130,17 @@ public class BlottoAgent extends Agent {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd  = new ServiceDescription();
-        sd.setType("Blotto");
-        sd.setName(getLocalName() + "-Blotto");
+        sd.setType(BLOTTO);
+        sd.setName(getLocalName() + "-" + BLOTTO);
         dfd.addServices(sd);
-        dfd.addOntologies("blotto-ontology");
-        dfd.addProtocols("fipa-contract-net");
-        dfd.addLanguages("fipa-sl");
+        dfd.addOntologies(BlottoOntology.ONTOLOGY_NAME);
+        dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        dfd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
 
         try {
             DFService.register(this, dfd);
         } catch (FIPAException fe) {
-            fe.printStackTrace();
+            logger.log(Level.SEVERE, "Cannot register in df: {0}", fe.getMessage());
         }
 
         // Setup the recognized langugages and ontologies
@@ -181,7 +159,6 @@ public class BlottoAgent extends Agent {
 
     @Override
     protected void takeDown() {
-        System.out.println("TakeDown!");
         for (Object o: results) {
             System.out.println((String)o);
         }
@@ -193,35 +170,30 @@ public class BlottoAgent extends Agent {
 
 
     private Object extractContentElement(ACLMessage request, int index) {
-        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage()))
-        {
-            throw new IllegalArgumentException(
+        return ((ContentElementList)extractContent(request)).get(index);
+    }
+
+
+    private Object extractContent(ACLMessage request) {
+        if (!FIPANames.ContentLanguage.FIPA_SL.equals(request.getLanguage())) {
+            throw new InvalidContentException(
                     "Unrecognized content language: '" + request.getLanguage() +
                             "'I recognize fipa-sl content only.");
         }
 
-        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology()))
-        {
-            throw new IllegalArgumentException("Unrecognized ontology: I recognize blotto-ontology only.");
+        if (!BlottoOntology.ONTOLOGY_NAME.equals(request.getOntology())) {
+            throw new InvalidContentException("Unrecognized ontology: I recognize blotto-ontology only.");
         }
 
         ContentManager cm = getContentManager();
-        try
-        {
-            System.out.println(request);
-            return ((ContentElementList)cm.extractContent(request)).get(index);
-        }
-        catch (Codec.CodecException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (OntologyException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
-        }
-        catch (NullPointerException ex)
-        {
-            throw new IllegalArgumentException("Content is invalid: " + ex.getMessage());
+        try {
+            return cm.extractContent(request);
+        } catch (Codec.CodecException ex) {
+            throw new InvalidContentException("Content is invalid: " + ex.getMessage());
+        } catch (OntologyException ex) {
+            throw new InvalidContentException("Content is invalid: " + ex.getMessage());
+        } catch (NullPointerException ex) {
+            throw new InvalidContentException("Content is invalid: " + ex.getMessage());
         }
     }
 }

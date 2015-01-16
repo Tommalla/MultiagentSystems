@@ -11,7 +11,6 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -46,16 +45,16 @@ public class ResponderBehaviour extends ContractNetResponder {
 
         System.out.println("Got CFP with minUnits: " + minUnits);
 
-        if (minUnits <= agent.units) {
+        if (minUnits <= agent.getUnits()) {
             // We can, so let's propose.
             response.setPerformative(ACLMessage.PROPOSE);
 
             // Try to give all units.
             ContentElementList cel = new ContentElementList();
             cel.add(agent.extractPlayBlottoAction(cfp));
-            cel.add(new CommittedUnits(agent.units));
+            cel.add(new CommittedUnits(agent.getUnits()));
 
-            giveUnits(agent.units);
+            giveUnits(agent.getUnits());
 
             try
             {

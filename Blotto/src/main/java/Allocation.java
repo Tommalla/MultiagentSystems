@@ -3,7 +3,7 @@ import jade.util.leap.List;
 
 
 public class Allocation implements Concept {
-    protected List assignment;
+    private List assignment;
 
     public Allocation(List assignment) {
         this.assignment = assignment;
